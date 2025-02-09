@@ -8,10 +8,43 @@ import time
 import random
 import math
 import os
+import json
+import keyboard
+import mouse
 from PIL import ImageGrab
 
 from humancursor import SystemCursor
 cursor = SystemCursor()
+
+
+def print_runtime(print_interval=5):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            start_time = time.time()
+            print(f"Starting {func.__name__}...")
+            
+            def print_elapsed():
+                while True:
+                    elapsed = time.time() - start_time
+                    hours = int(elapsed // 3600)
+                    minutes = int((elapsed % 3600) // 60)
+                    seconds = int(elapsed % 60)
+                    print(f"\r{func.__name__} running for: {hours:02d}:{minutes:02d}:{seconds:02d}", end="")
+                    time.sleep(print_interval)
+            
+            # Start timer thread
+            import threading
+            timer_thread = threading.Thread(target=print_elapsed, daemon=True)
+            timer_thread.start()
+            
+            # Run the actual function
+            return func(*args, **kwargs)
+        return wrapper
+    
+    # Handle both @print_runtime and @print_runtime(interval) syntax
+    if callable(print_interval):
+        return decorator(print_interval)
+    return decorator
 
 def capture_window_screenshot(window_title, output_path):
     # Get the window by title
@@ -103,7 +136,7 @@ def find_and_click_in_window(window_title, target_image_path, threshold=0.8):
         print("No match found.")
         return False
 
-def click(window_title, target_image_path, threshold=0.8):
+def click(window_title, target_image_path, threshold=0.8, skip_move=False):
     window = None
     for win in gw.getAllTitles():
         if window_title.lower() in win.lower():
@@ -143,7 +176,9 @@ def click(window_title, target_image_path, threshold=0.8):
 
         # Click the center of the matched area
         # smooth_move_to(center_x, center_y, 0.3, 15)
-        cursor.move_to([center_x, center_y])
+
+        if not skip_move:
+            cursor.move_to([center_x, center_y], duration=0.5)
         pyautogui.click(x=center_x, y=center_y)
         print(f"Clicked at ({center_x}, {center_y}). Match confidence: {max_val:.2f}")
         return True
@@ -468,21 +503,193 @@ def click_polygon(screenshot=None):
     cursor.move_to([screen_x, screen_y], 0.1)
     pyautogui.click(x=screen_x, y=screen_y)
 
-    time.sleep(5)
+    time.sleep(2)
 
 # attack()
-fish_shark()
+# fish_shark()
 # build()
 
-# time.sleep(1)
-# while True:
-#     time.sleep(1)
-#     screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+def monster(mob_name):
+    time.sleep(1)
+    while True:
+        time.sleep(1)
+        screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
 
-#     monster = "cow"
-#     png1 = f"runescape/{monster}/{monster}.png"
-#     png2 = f"runescape/{monster}/{monster}_dead.png"
+        monster = mob_name
+        png1 = f"runescape/{monster}/{monster}.png"
+        png2 = f"runescape/{monster}/{monster}_dead.png"
 
-    
-#     if not check_if_screenshot_contains(screenshot, png1) or check_if_screenshot_contains(screenshot, png2, .95) :
-#         click_polygon()
+        
+        if not check_if_screenshot_contains(screenshot, png1) or check_if_screenshot_contains(screenshot, png2, .95) :
+            click_polygon()
+
+# monster("buffalo")
+
+def cosmic_rune():
+    while True:
+        # time.sleep(5)
+        screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+        
+        if check_if_screenshot_contains(screenshot, "runescape/cosmic_rune/essence.png"):
+            click("RuneLite", "runescape/cosmic_rune/essence.png", skip_move=True)
+            time.sleep(0.5)
+
+            if check_if_screenshot_contains(screenshot, "runescape/cosmic_rune/banker_note.png"):
+                click("RuneLite", "runescape/cosmic_rune/banker_note.png", skip_move=True)
+                time.sleep(0.5)
+
+                if check_if_screenshot_contains(screenshot, "runescape/cosmic_rune/cosmic_rune.png"):
+                    click("RuneLite", "runescape/cosmic_rune/cosmic_rune.png")
+                    # time.sleep(1)
+
+
+def build_portal():
+    while True:
+        # time.sleep(5)
+        screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+        
+        if check_if_screenshot_contains(screenshot, "runescape/build_portal/build_fence_1.png"):
+            click("RuneLite", "runescape/build_portal/build_fence_1.png")
+            time.sleep(2)
+
+            screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+
+            if check_if_screenshot_contains(screenshot, "runescape/build_portal/build_fence_2.png"):
+                click("RuneLite", "runescape/build_portal/build_fence_2.png")
+                time.sleep(3)
+
+                screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+
+                if check_if_screenshot_contains(screenshot, "runescape/build_portal/build_fence_1.png"):
+                    click("RuneLite", "runescape/build_portal/build_fence_1.png")
+                    time.sleep(2)
+
+                    screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+
+                    if check_if_screenshot_contains(screenshot, "runescape/build_portal/build_fence_yes.png"):
+                        click("RuneLite", "runescape/build_portal/build_fence_yes.png")
+                        time.sleep(1.5)
+
+                        screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+
+                        if check_if_screenshot_contains(screenshot, "runescape/build_portal/build_fence_note.png"):
+                            click("RuneLite", "runescape/build_portal/build_fence_note.png")
+                            time.sleep(1.5)
+
+# build_portal()
+
+# cosmic_rune()
+
+
+
+def record_actions():
+    print("Recording actions. Press 'Esc' to stop.")
+    actions = []
+    start_time = time.time()
+
+    def record_mouse_event(event):
+        timestamp = time.time() - start_time
+        if hasattr(event, 'button') and hasattr(event, 'event_type'):
+            x, y = mouse.get_position()  # Get the current mouse position
+            actions.append({
+                "type": "mouse_click",
+                "button": event.button,
+                "event_type": event.event_type,
+                "x": x,
+                "y": y,
+                "time": timestamp
+            })
+
+    def record_keyboard_event(event):
+        timestamp = time.time() - start_time
+        actions.append({
+            "type": "key_event",
+            "key": event.name,
+            "event_type": event.event_type,
+            "time": timestamp
+        })
+
+    mouse.hook(record_mouse_event)
+    keyboard.hook(record_keyboard_event)
+
+    try:
+        while True:
+            if keyboard.is_pressed('Esc'):
+                print("Recording stopped.")
+                break
+            time.sleep(0.01)  # Reduce CPU usage
+    finally:
+        mouse.unhook(record_mouse_event)
+        keyboard.unhook(record_keyboard_event)
+
+    # Save actions to a file
+    with open("recorded_actions.json", "w") as file:
+        json.dump(actions, file)
+
+    return actions
+
+@print_runtime(60)
+def replay_actions(record_files=["recorded_actions.json"], actions=None):
+    # if not actions:
+    #     with open("recorded_actions.json", "r") as file:
+    #         actions = json.load(file)
+
+    print("Replaying actions...")
+
+    while True:
+        record_file = random.choice(record_files)
+        with open(record_file, "r") as file:
+            actions = json.load(file)
+
+        start_time = time.time()
+
+        for action in actions:
+            if keyboard.is_pressed('Esc'):  # Check if 'Esc' is pressed to stop replay
+                print("Replay stopped.")
+                break
+            action_time = action["time"]
+            elapsed_time = time.time() - start_time
+            wait_time = action_time - elapsed_time
+
+            if wait_time > 0:
+                time.sleep(wait_time)
+
+            if action["type"] == "mouse_click":
+                if action["event_type"] == "up":
+                    continue
+                cursor.move_to([action["x"], action["y"]], duration=0.5)
+                pyautogui.click(x=action["x"], y=action["y"], button=action["button"])
+            elif action["type"] == "key_event":
+                if action["event_type"] == "down":
+                    keyboard.press(action["key"])
+                elif action["event_type"] == "up":
+                    keyboard.release(action["key"])
+        
+        time.sleep(1)
+
+    print("Replay completed.")
+
+
+# record_actions()
+# replay_actions()
+
+def fish_k():
+    while True:
+        time.sleep(5)
+        screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+        
+        if not check_if_screenshot_contains(screenshot, "runescape/fishing.png"):
+            click("RuneLite", "runescape/k.png")
+
+# fish_k()
+
+
+varlamore_course_files = [
+    # "varlamore_course_1.json",
+    # "varlamore_course_2.json",
+    # "varlamore_course_3.json",
+    "recorded_actions.json",
+]
+
+# record_actions()
+replay_actions(record_files=varlamore_course_files)
