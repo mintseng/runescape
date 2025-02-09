@@ -684,12 +684,16 @@ def fish_k():
 # fish_k()
 
 
-varlamore_course_files = [
+pc_varlamore_course_files = [
     # "varlamore_course_1.json",
     # "varlamore_course_2.json",
     # "varlamore_course_3.json",
     "recorded_actions.json",
 ]
 
-# record_actions()
-replay_actions(record_files=varlamore_course_files)
+mac_varlamore_course_files = [
+    # "mac_varlamore_course_1.json",
+]
+
+record_actions()
+# replay_actions(record_files=mac_varlamore_course_files)
