@@ -66,7 +66,7 @@ def capture_window_screenshot(window_title, output_path):
     # return output_path
     return screenshot
 
-def check_if_screenshot_contains(screenshot, target_image_path, threshold=0.8):
+def check_if_screenshot_contains(screenshot, target_image_path, threshold=0.85):
     # Convert the screenshot to a format compatible with OpenCV
     screenshot_np = np.array(screenshot)
     screenshot_gray = cv2.cvtColor(screenshot_np, cv2.COLOR_BGR2GRAY)
@@ -471,6 +471,10 @@ def click_polygon(screenshot=None):
     mask2 = cv2.inRange(hsv_image, lower_red2, upper_red2)
     red_mask = mask1 | mask2
 
+    cv2.imshow("Red Mask", red_mask)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
     # Find contours
     contours, _ = cv2.findContours(red_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -478,10 +482,10 @@ def click_polygon(screenshot=None):
     contour = max(contours, key=cv2.contourArea)
 
     # TESTING CODE
-    # cv2.drawContours(screenshot_np, [contour], -1, (0, 255, 0), 3)
-    # cv2.imshow('Detected Polygon', screenshot_np)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
+    cv2.drawContours(screenshot_np, [contour], -1, (0, 255, 0), 3)
+    cv2.imshow('Detected Polygon', screenshot_np)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
     
     M = cv2.moments(contour)
     if M['m00'] != 0:
@@ -629,7 +633,7 @@ def record_actions():
     return actions
 
 @print_runtime(60)
-def replay_actions(record_files=["recorded_actions.json"], actions=None):
+def replay_actions(record_files=["recorded_actions.json"], actions=None, sleep_time=1):
     # if not actions:
     #     with open("recorded_actions.json", "r") as file:
     #         actions = json.load(file)
@@ -665,7 +669,7 @@ def replay_actions(record_files=["recorded_actions.json"], actions=None):
                 elif action["event_type"] == "up":
                     keyboard.release(action["key"])
         
-        time.sleep(1)
+        time.sleep(sleep_time)
 
     print("Replay completed.")
 
@@ -684,16 +688,514 @@ def fish_k():
 # fish_k()
 
 
-pc_varlamore_course_files = [
-    # "varlamore_course_1.json",
-    # "varlamore_course_2.json",
-    # "varlamore_course_3.json",
-    "recorded_actions.json",
-]
+# pc_varlamore_course_files = [
+#     # "varlamore_course_1.json",
+#     # "varlamore_course_2.json",
+#     # "varlamore_course_3.json",
+#     # "pc_varlamore_course_1.json",
+#     "pc_varlamore_course_2.json",
+# ]
 
-mac_varlamore_course_files = [
-    # "mac_varlamore_course_1.json",
-]
+# mac_varlamore_course_files = [
+#     # "mac_varlamore_course_1.json",
+# ]
 
-record_actions()
-# replay_actions(record_files=mac_varlamore_course_files)
+# # record_actions()
+# replay_actions(record_files=pc_varlamore_course_files)
+
+def get_numbered_images(directory, extension=".png"):
+    # Get all files in directory that match the pattern
+    import os
+    import re
+    
+    # Get all png files that start with a number
+    files = [f for f in os.listdir(directory) if f.endswith(extension) and f[0].isdigit()]
+    
+    # Sort files based on the numeric part
+    files.sort(key=lambda f: int(re.search(r'\d+', f).group()))
+    
+    # Return full paths
+    return [os.path.join(directory, f) for f in files]
+
+
+def varlamore_agility():
+    images = get_numbered_images("runescape/varlamore_agility")
+    sleep_timer = [
+        5,
+        21,
+        # 13,
+        3,
+        7,
+        20,
+        # 12,
+        # 4,
+        11,
+    ]
+    
+    while True:
+        i = 0
+        # for i in range(len(images)):
+        while i < len(images):
+            if click("RuneLite", images[i]):
+                time.sleep(sleep_timer[i])
+                i += 1
+            else:
+                # if click("RuneLite", "runescape/varlamore_agility/failsafe_1.png"):
+                #     time.sleep(4)
+                #     i = 5
+                # elif click("RuneLite", "runescape/varlamore_agility/failsafe_2.png"):
+                #     time.sleep(13)
+                #     i = 3
+                # elif click("RuneLite", "runescape/varlamore_agility/failsafe_3.png"):
+                #     time.sleep(11)
+                #     i = 0
+                # elif click("RuneLite", "runescape/varlamore_agility/failsafe_4.png"):
+                #     time.sleep(11)
+                #     i = 0
+                # elif click("RuneLite", "runescape/varlamore_agility/failsafe_5.png"):
+                #     time.sleep(4)
+                #     i = 5
+                # elif click("RuneLite", "runescape/varlamore_agility/failsafe_6.png"):
+                #     time.sleep(11)
+                #     i = 0
+                if click("RuneLite", "runescape/varlamore_agility/failsafe_7.png"):
+                    time.sleep(20)
+                    i = 5
+                elif click("RuneLite", "runescape/varlamore_agility/failsafe_8.png"):
+                    time.sleep(3)
+                    i = 3
+                elif click("RuneLite", "runescape/varlamore_agility/failsafe_9.png"):
+                    time.sleep(11)
+                    i = 0
+# varlamore_agility()
+
+# images = get_numbered_images("runescape/varlamore_agility")
+# print(images)
+# click("RuneLite", images[0])
+
+# time.sleep(2)
+# while True:
+#     varlamore_agility()
+
+# print(get_numbered_images("runescape/varlamore_agility"))
+
+# record_actions()
+
+# time.sleep(500)
+# replay_actions(sleep_time=600)
+# replay_actions()
+
+# monster("cyclops")
+# click_polygon()
+
+import cv2
+import numpy as np
+import pyautogui  # For simulating clicks
+from colorsys import rgb_to_hsv
+
+def get_hsv_range(color_rgb, hue_variation=10, sat_variation=50, val_variation=50):
+    """Convert RGB to HSV and create a range of close colors."""
+    r, g, b = color_rgb
+
+    # Normalize RGB to [0,1] for conversion
+    r, g, b = r / 255.0, g / 255.0, b / 255.0
+    h, s, v = rgb_to_hsv(r, g, b)
+
+    # Convert H to OpenCV scale (0-180 instead of 0-360)
+    h = int(h * 180)
+    s = int(s * 255)
+    v = int(v * 255)
+
+    # Define the lower and upper bounds
+    lower_bound = np.array([max(h - hue_variation, 0), max(s - sat_variation, 50), max(v - val_variation, 50)])
+    upper_bound = np.array([min(h + hue_variation, 180), min(s + sat_variation, 255), min(v + val_variation, 255)])
+
+    return lower_bound, upper_bound
+
+import matplotlib.pyplot as plt
+
+def click_closest_polygon(color_rgb, min_area=100):
+    """Find and click the closest polygon matching the given color."""
+    screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+
+    screenshot_np = np.array(screenshot)
+    screenshot_bgr = cv2.cvtColor(screenshot_np, cv2.COLOR_RGB2BGR)
+    hsv_image = cv2.cvtColor(screenshot_bgr, cv2.COLOR_BGR2HSV)
+
+    # Get color range based on input
+    lower_color, upper_color = get_hsv_range(color_rgb)
+
+    # Create mask and find contours
+    mask = cv2.inRange(hsv_image, lower_color, upper_color)
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Filter out small contours
+    contours = [cnt for cnt in contours if cv2.contourArea(cnt) >= min_area]
+
+    if not contours:
+        print("No polygons detected.")
+        return
+
+    # Get image center
+    height, width = screenshot_bgr.shape[:2]
+    center_x, center_y = width // 2, height // 2
+
+    # Find closest contour
+    closest_contour = None
+    min_distance = float("inf")
+
+    for cnt in contours:
+        M = cv2.moments(cnt)
+        if M["m00"] == 0:
+            continue
+        cx, cy = int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"])
+        distance = np.sqrt((cx - center_x) ** 2 + (cy - center_y) ** 2)
+
+        if distance < min_distance:
+            min_distance = distance
+            closest_contour = cnt
+
+    if closest_contour is None:
+        print("No valid contour found.")
+        return
+
+    # Draw all detected polygons in blue
+    cv2.drawContours(screenshot_bgr, contours, -1, (255, 0, 0), 2)  # Blue outline
+
+    # Highlight closest polygon in red
+    if closest_contour is not None:
+        cv2.drawContours(screenshot_bgr, [closest_contour], -1, (0, 0, 255), 3)  # Red outline
+
+
+    # Show the result using matplotlib
+    # plt.figure(figsize=(10, 6))
+    # plt.imshow(cv2.cvtColor(screenshot_bgr, cv2.COLOR_BGR2RGB))
+    # plt.axis("off")
+    # plt.show()
+
+    # Get centroid of closest polygon
+    M = cv2.moments(closest_contour)
+    final_cx, final_cy = int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"])
+
+    # Simulate a mouse click
+    cursor.move_to([final_cx, final_cy], duration=0.1)
+    pyautogui.click(final_cx, final_cy)
+    print(f"Clicked at ({final_cx}, {final_cy})")
+
+lower_green = np.array([10, 250, 10])  # Lower bound (darker/muted green)
+upper_green = np.array([70, 255, 255])  # Upper bound (bright green)
+# click_closest_polygon(lower_green, upper_green)
+color_rgb = (10, 250, 10)
+# while True:
+#     if keyboard.is_pressed("esc"):
+#         print("Escape key pressed, exiting loop.")
+#         break
+
+#     click_closest_polygon(color_rgb)
+#     time.sleep(2)
+
+
+
+import cv2
+import numpy as np
+import pytesseract
+
+import easyocr
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Initialize the OCR reader
+# reader = easyocr.Reader(['en'])
+
+# def extract_number_from_icon(region):
+#     """Extract number from a specific region next to an icon."""
+#     # Convert to grayscale
+#     gray = cv2.cvtColor(region, cv2.COLOR_BGR2GRAY)
+
+#     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+#     gray = clahe.apply(gray)
+
+#     gray = cv2.bilateralFilter(gray, 9, 75, 75)
+    
+
+#     # Threshold to enhance the numbers
+#     # thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
+#     thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 5, 2)
+
+#     # kernel = np.ones((3, 3), np.uint8)
+#     # # thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+
+
+
+
+#     cv2.imshow("Processed Region", thresh)
+#     cv2.waitKey(0)
+#     cv2.destroyAllWindows()
+
+#     # Clean up the image with morphological operations (if necessary)
+#     # kernel = np.ones((2, 2), np.uint8)
+#     # processed = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
+
+
+#     # cv2.imshow("Processed Region", processed)
+#     # cv2.waitKey(0)
+#     # cv2.destroyAllWindows()
+
+#     result = reader.readtext(thresh)
+#         # logging.info(f"OCR result: {result}")
+        
+#     if not result:
+#         logging.warning("No text detected in the image")
+#         return ""
+    
+#     text = ' '.join([entry[1] for entry in result])
+#     logging.info(f"Text extracted. Length: {len(text)} characters")
+
+
+#     # Use Tesseract to extract numbers
+#     # config = "--psm 7 -c tessedit_char_whitelist=0123456789"
+#     config = '--oem 3 --psm 6 -c tessedit_char_whitelist=0123456789'
+
+#     extracted_text = pytesseract.image_to_string(thresh, config=config).strip()
+#     print(extracted_text)
+
+#     return extracted_text
+
+
+# def detect_icons_and_extract_numbers(screenshot, icon_templates):
+#     """Detect icons in the screenshot and extract corresponding numbers."""
+    
+#     results = {}
+#     screenshot_np = np.array(screenshot)
+#     screenshot_gray = cv2.cvtColor(screenshot_np, cv2.COLOR_BGR2GRAY)
+
+#     for icon_name, template in icon_templates.items():
+#         # Match the icon in the screenshot using template matching
+#         res = cv2.matchTemplate(screenshot_gray, template, cv2.TM_CCOEFF_NORMED)
+#         threshold = 0.8  # Adjust threshold for better matching
+#         loc = np.where(res >= threshold)
+
+#         for pt in zip(*loc[::-1]):  # Reverse the order for (x, y) points
+#             x, y = pt
+#             w, h = template.shape[::-1]  # Width and height of the template
+
+#             left_region_length = 30
+#             region = screenshot_np[y:y + h, x - left_region_length:x + w]  # Get the region around the icon
+            
+#             # You can visualize or log the region if needed
+#             cv2.imshow("Icon Region", region)  # Optional: visualize the detected icon region
+#             # Wait indefinitely until a key is pressed
+#             cv2.waitKey(0)
+
+#             # Close all OpenCV windows
+#             cv2.destroyAllWindows()
+
+#             # Define the area to the left of the icon to look for the number
+#             number_region = screenshot_np[y:y + h, x - 80:x]  # Adjust width based on the distance between the icon and number
+
+#             result = reader.readtext(number_region)
+#                 # logging.info(f"OCR result: {result}")
+                
+#             if not result:
+#                 logging.warning("No text detected in the image")
+#                 # return ""
+            
+#             text = ' '.join([entry[1] for entry in result])
+#             logging.info(f"Text extracted. Length: {len(text)} characters")
+
+#             number = extract_number_from_icon(number_region)
+            
+#             if number:  # Only store the number if it's detected
+#                 results[icon_name] = number
+    
+#     return results
+
+
+# Example Usage
+# screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+
+# # Load icon templates
+# icon_templates = {
+#     "health_icon": cv2.imread("runescape/icons/health.png", cv2.IMREAD_GRAYSCALE),  # Example icon for health
+#     "prayer_icon": cv2.imread("runescape/icons/prayer.png", cv2.IMREAD_GRAYSCALE),  # Example icon for mana
+#     # Add other icons here...
+# }
+
+# # Detect icons and extract numbers
+# numbers = detect_icons_and_extract_numbers(screenshot, icon_templates)
+
+# print("Detected numbers:", numbers)
+
+def barbarian_fishing():
+    status = "start"
+
+    while True:
+        screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+
+        if status == "start":
+            print("Fishing...")
+            if not check_if_screenshot_contains(screenshot, "runescape/barbarian_fishing/fishing_text.png"):
+                click("RuneLite", "runescape/barbarian_fishing/fishing.png", threshold=0.8) or click("RuneLite", "runescape/barbarian_fishing/fishing_2.png", threshold=0.8)
+                time.sleep(5)
+
+            
+            while not check_if_screenshot_contains(screenshot, "runescape/barbarian_fishing/fishing_text.png") or not check_if_screenshot_contains(screenshot, "runescape/barbarian_fishing/fishing_text_2.png"):
+                time.sleep(5)
+                screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+
+                if check_if_screenshot_contains(screenshot, "runescape/barbarian_fishing/full_fish.png"):
+                    status = "cook"
+                    break
+                elif check_if_screenshot_contains(screenshot, "runescape/barbarian_fishing/not_fishing.png", threshold=0.65):
+                    break
+            
+            time.sleep(2)
+        elif status == "cook":
+            print("Cooking...")
+            if (
+                click("RuneLite", "runescape/barbarian_fishing/fire.png", threshold=0.7) or
+                click("RuneLite", "runescape/barbarian_fishing/fire_2.png", threshold=0.7) or
+                click("RuneLite", "runescape/barbarian_fishing/fire_3.png", threshold=0.7) or
+                click("RuneLite", "runescape/barbarian_fishing/fire_4.png", threshold=0.7)
+            ):
+                time.sleep(5)
+
+                if click("RuneLite", "runescape/barbarian_fishing/raw_salmon.png"):
+                    time.sleep(3)
+                    while check_if_screenshot_contains(screenshot, "runescape/barbarian_fishing/cooking.png") or check_if_screenshot_contains(screenshot, "runescape/barbarian_fishing/cooking_2.png"):
+                        time.sleep(1)
+                        screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+                elif click("RuneLite", "runescape/barbarian_fishing/raw_trout.png"):
+                    time.sleep(3)
+                    while check_if_screenshot_contains(screenshot, "runescape/barbarian_fishing/cooking.png") or check_if_screenshot_contains(screenshot, "runescape/barbarian_fishing/cooking_2.png"):
+                        time.sleep(1)
+                        screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+                else:
+                    status = "drop"
+        elif status == "drop":
+            print("Dropping...")
+            while click("RuneLite", "runescape/barbarian_fishing/drop_salmon.png"):
+                pass
+                
+            while click("RuneLite", "runescape/barbarian_fishing/drop_burnt_fish.png"):
+                pass
+                
+            while click("RuneLite", "runescape/barbarian_fishing/drop_trout.png"):
+                pass
+            
+            time.sleep(2)
+            status = "start"
+
+
+    
+
+# barbarian_fishing()
+
+def mistrock_fishing():
+    status = "start"
+    folder = "mistrock_fishing"
+
+    while True:
+        screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+
+        if status == "start":
+            print("Fishing...")
+            if not check_if_screenshot_contains(screenshot, "runescape/" + folder + "/fishing_text.png"):
+                (
+                    click("RuneLite", "runescape/" + folder + "/fishing_1.png", threshold=0.75)
+                    or click("RuneLite", "runescape/" + folder + "/fishing_2.png", threshold=0.75)
+                    or click("RuneLite", "runescape/" + folder + "/fishing_3.png", threshold=0.75)
+                )
+                time.sleep(5)
+
+            
+            while (
+                not check_if_screenshot_contains(screenshot, "runescape/" + folder + "/fishing_text.png")
+                or not check_if_screenshot_contains(screenshot, "runescape/" + folder + "/fishing_text_2.png")
+            ):
+                time.sleep(5)
+                screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+
+                if check_if_screenshot_contains(screenshot, "runescape/" + folder + "/full_fish.png"):
+                    status = "bank"
+                    break
+                elif check_if_screenshot_contains(screenshot, "runescape/" + folder + "/not_fishing.png", threshold=0.65):
+                    break
+            
+            time.sleep(2)
+        elif status == "bank":
+            print("Banking...")
+            bank_walk_options = [
+                "runescape/" + folder + "/bank_walk_1.png",
+                "runescape/" + folder + "/bank_walk_2.png",
+                "runescape/" + folder + "/bank_walk_3.png",
+                "runescape/" + folder + "/bank_walk_4.png",
+            ]
+
+            shuffled_bank_walk_options = random.sample(bank_walk_options, len(bank_walk_options))
+            
+            found = False
+
+            while not found:
+                for bank_walk_option in shuffled_bank_walk_options:
+                    if click("RuneLite", bank_walk_option):
+                        found = True
+                        break
+            
+            time.sleep(7)
+
+            banker_options = [
+                # "runescape/" + folder + "/banker_1.png",
+                # "runescape/" + folder + "/banker_2.png",
+                "runescape/" + folder + "/banker_3.png",
+                "runescape/" + folder + "/banker_4.png",
+            ]
+
+            shuffled_banker_options = random.sample(banker_options, len(banker_options))
+
+            found = False
+            while not found:
+                for banker_option in shuffled_banker_options:
+                    if click("RuneLite", banker_option, threshold=0.75):
+                        found = True
+                        break
+            
+            time.sleep(11)
+
+            click("RuneLite", "runescape/" + folder + "/bank_tuna.png")
+            time.sleep(0.5)
+            click("RuneLite", "runescape/" + folder + "/bank_swordfish.png")
+            
+            time.sleep(0.5)
+            click("RuneLite", "runescape/" + folder + "/close.png")
+
+            time.sleep(0.5)
+
+            status = "walk_back"
+        elif status == "walk_back":
+            print("Walking back...")
+            bank_walk_options = [
+                "runescape/" + folder + "/bank_walk_1.png",
+                "runescape/" + folder + "/bank_walk_2.png",
+                "runescape/" + folder + "/bank_walk_3.png",
+                "runescape/" + folder + "/bank_walk_4.png",
+                "runescape/" + folder + "/bank_walk_5.png",
+                "runescape/" + folder + "/bank_walk_6.png",
+            ]
+
+            shuffled_bank_walk_options = random.sample(bank_walk_options, len(bank_walk_options))
+            
+            found_path_back = False
+            while not found_path_back:
+                for bank_walk_option in shuffled_bank_walk_options:
+                    if click("RuneLite", bank_walk_option, threshold=0.75):
+                        found_path_back = True
+                        break
+            
+            time.sleep(11)
+            status = "start"
+
+mistrock_fishing()
+
+# click("RuneLite", "runescape/barbarian_fishing/fire.png", threshold=0.8)
