@@ -782,7 +782,7 @@ def varlamore_agility():
 # record_actions()
 
 # time.sleep(500)
-# replay_actions(sleep_time=600)
+# replay_actions()
 # replay_actions()
 
 # monster("cyclops")
@@ -896,15 +896,15 @@ color_rgb = (10, 250, 10)
 
 
 
-import cv2
-import numpy as np
-import pytesseract
+# import cv2
+# import numpy as np
+# import pytesseract
 
-import easyocr
-import logging
+# import easyocr
+# import logging
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 # Initialize the OCR reader
 # reader = easyocr.Reader(['en'])
 
@@ -1122,6 +1122,14 @@ def mistrock_fishing():
                     break
                 elif check_if_screenshot_contains(screenshot, "runescape/" + folder + "/not_fishing.png", threshold=0.65):
                     break
+                else:
+                    (
+                        click("RuneLite", "runescape/" + folder + "/fishing_1.png", threshold=0.75)
+                        or click("RuneLite", "runescape/" + folder + "/fishing_2.png", threshold=0.75)
+                        or click("RuneLite", "runescape/" + folder + "/fishing_3.png", threshold=0.75)
+                    )
+
+                    time.sleep(3)
             
             time.sleep(2)
         elif status == "bank":
@@ -1196,6 +1204,30 @@ def mistrock_fishing():
             time.sleep(11)
             status = "start"
 
-mistrock_fishing()
+# mistrock_fishing()
 
 # click("RuneLite", "runescape/barbarian_fishing/fire.png", threshold=0.8)
+
+def varlamore_thieving():
+    folder = "varlamore_thieving"
+    thieving_options = [
+        "runescape/" + folder + "/thieving.png",
+    ]
+
+    thieving_png = "runescape/" + folder + "/thieving.png"
+
+    while True:
+        screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+        if check_if_screenshot_contains(screenshot, thieving_png):
+            time.sleep(2)
+
+            while True:
+                if click("RuneLite", thieving_png):
+                    break
+            time.sleep(20)
+
+            click("RuneLite", "runescape/" + folder + "/coin.png")
+            time.sleep(50)
+        time.sleep(0.5)
+
+varlamore_thieving()
