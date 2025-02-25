@@ -11,10 +11,41 @@ import os
 import json
 import keyboard
 import mouse
+import gc
 from PIL import ImageGrab
 
 from humancursor import SystemCursor
 cursor = SystemCursor()
+
+import threading
+from functools import wraps
+
+def auto_gc(interval: int = 10):
+    """
+    A decorator that runs `gc.collect()` every `interval` seconds 
+    while the decorated function is executing.
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            stop_event = threading.Event()
+
+            def gc_worker():
+                while not stop_event.is_set():
+                    time.sleep(interval)
+                    gc.collect()
+            
+            gc_thread = threading.Thread(target=gc_worker, daemon=True)
+            gc_thread.start()
+
+            try:
+                return func(*args, **kwargs)
+            finally:
+                stop_event.set()
+                gc_thread.join()
+
+        return wrapper
+    return decorator
 
 
 def print_runtime(print_interval=5):
@@ -178,7 +209,7 @@ def click(window_title, target_image_path, threshold=0.8, skip_move=False):
         # smooth_move_to(center_x, center_y, 0.3, 15)
 
         if not skip_move:
-            cursor.move_to([center_x, center_y], duration=0.5)
+            cursor.move_to([center_x, center_y], duration=0.2)
         pyautogui.click(x=center_x, y=center_y)
         print(f"Clicked at ({center_x}, {center_y}). Match confidence: {max_val:.2f}")
         return True
@@ -633,7 +664,7 @@ def record_actions():
     return actions
 
 @print_runtime(60)
-def replay_actions(record_files=["recorded_actions.json"], actions=None, sleep_time=1):
+def replay_actions(record_files=["recorded_actions.json"], actions=None, sleep_time=1, once=False):
     # if not actions:
     #     with open("recorded_actions.json", "r") as file:
     #         actions = json.load(file)
@@ -661,7 +692,7 @@ def replay_actions(record_files=["recorded_actions.json"], actions=None, sleep_t
             if action["type"] == "mouse_click":
                 if action["event_type"] == "up":
                     continue
-                cursor.move_to([action["x"], action["y"]], duration=0.5)
+                cursor.move_to([action["x"], action["y"]], duration=0.5, steady=True)
                 pyautogui.click(x=action["x"], y=action["y"], button=action["button"])
             elif action["type"] == "key_event":
                 if action["event_type"] == "down":
@@ -670,6 +701,9 @@ def replay_actions(record_files=["recorded_actions.json"], actions=None, sleep_t
                     keyboard.release(action["key"])
         
         time.sleep(sleep_time)
+
+        if once:
+            break
 
     print("Replay completed.")
 
@@ -788,9 +822,9 @@ def varlamore_agility():
 # monster("cyclops")
 # click_polygon()
 
-import cv2
-import numpy as np
-import pyautogui  # For simulating clicks
+# import cv2
+# import numpy as np
+# import pyautogui  # For simulating clicks
 from colorsys import rgb_to_hsv
 
 def get_hsv_range(color_rgb, hue_variation=10, sat_variation=50, val_variation=50):
@@ -812,9 +846,9 @@ def get_hsv_range(color_rgb, hue_variation=10, sat_variation=50, val_variation=5
 
     return lower_bound, upper_bound
 
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
-def click_closest_polygon(color_rgb, min_area=100):
+def click_closest_polygon(color_rgb, min_area=200):
     """Find and click the closest polygon matching the given color."""
     screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
 
@@ -882,10 +916,10 @@ def click_closest_polygon(color_rgb, min_area=100):
     pyautogui.click(final_cx, final_cy)
     print(f"Clicked at ({final_cx}, {final_cy})")
 
-lower_green = np.array([10, 250, 10])  # Lower bound (darker/muted green)
-upper_green = np.array([70, 255, 255])  # Upper bound (bright green)
-# click_closest_polygon(lower_green, upper_green)
-color_rgb = (10, 250, 10)
+# lower_green = np.array([10, 250, 10])  # Lower bound (darker/muted green)
+# upper_green = np.array([70, 255, 255])  # Upper bound (bright green)
+# # click_closest_polygon(lower_green, upper_green)
+# color_rgb = (10, 250, 10)
 # while True:
 #     if keyboard.is_pressed("esc"):
 #         print("Escape key pressed, exiting loop.")
@@ -1208,6 +1242,23 @@ def mistrock_fishing():
 
 # click("RuneLite", "runescape/barbarian_fishing/fire.png", threshold=0.8)
 
+def move_mouse_near_window_middle(window_name):
+    """Moves the mouse to a random location near the middle of a given window."""
+    window = gw.getWindowsWithTitle(window_name)
+    if not window:
+        print(f"Window '{window_name}' not found.")
+        return
+
+    win = window[0]  # Take the first matching window
+    center_x = win.left + win.width // 2
+    center_y = win.top + win.height // 2
+
+    # Add some random offset
+    offset_x = random.randint(-win.width // 6, win.width // 6)
+    offset_y = random.randint(-win.height // 6, win.height // 6)
+
+    cursor.move_to([center_x + offset_x, center_y + offset_y], duration=0.2)
+
 def varlamore_thieving():
     folder = "varlamore_thieving"
     thieving_options = [
@@ -1219,15 +1270,572 @@ def varlamore_thieving():
     while True:
         screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
         if check_if_screenshot_contains(screenshot, thieving_png):
-            time.sleep(2)
+            time.sleep(1)
 
             while True:
-                if click("RuneLite", thieving_png):
+                if click("RuneLite", thieving_png, threshold=.85):
                     break
+            
+            time.sleep(2.5)
+            while True:
+                if click("RuneLite", thieving_png, threshold=.85):
+                    break
+
             time.sleep(20)
 
             click("RuneLite", "runescape/" + folder + "/coin.png")
             time.sleep(50)
+
+            move_mouse_near_window_middle("RuneLite")
         time.sleep(0.5)
 
-varlamore_thieving()
+# varlamore_thieving()
+
+
+# pc_varlamore_course_files = [
+#     "motherlode_mine.json",
+# ]
+
+
+# record_actions()
+# replay_actions()
+# replay_actions(record_files=pc_varlamore_course_files)
+
+def hex_to_rgb(hex_color):
+    """
+    Convert an 8-character ARGB hex string to an RGB tuple.
+    
+    :param hex_color: String in the format "#AARRGGBB".
+    :return: Tuple (R, G, B).
+    """
+    hex_color = hex_color.strip().lstrip("#")  # Remove '#' if present
+
+    if len(hex_color) != 8:
+        raise ValueError(f"Invalid hex color format: {hex_color}. Expected #AARRGGBB.")
+
+    try:
+        # Extract RGB components (ignore alpha)
+        r = int(hex_color[2:4], 16)
+        g = int(hex_color[4:6], 16)
+        b = int(hex_color[6:8], 16)
+        return (r, g, b)
+    except ValueError as e:
+        raise ValueError(f"Error parsing hex color '{hex_color}': {e}")
+
+def rgb_to_hsv_range(rgb_color, hue_tolerance=10, sat_tolerance=50, val_tolerance=50):
+    """
+    Convert an RGB color to an HSV range with tolerances.
+    
+    :param rgb_color: Tuple of (R, G, B) values (0-255).
+    :return: Tuple (lower HSV bound, upper HSV bound).
+    """
+    # Convert RGB to HSV (OpenCV uses BGR, so flip RGB to BGR first)
+    bgr_color = np.uint8([[rgb_color[::-1]]])  # Reverse RGB -> BGR
+    hsv_color = cv2.cvtColor(bgr_color, cv2.COLOR_BGR2HSV)[0][0]
+
+    # Extract the hue, saturation, and value components
+    h, s, v = hsv_color
+
+    # Define the HSV lower and upper bounds
+    lower_bound = np.array([max(h - hue_tolerance, 0), max(s - sat_tolerance, 50), max(v - val_tolerance, 50)])
+    upper_bound = np.array([min(h + hue_tolerance, 179), min(s + sat_tolerance, 255), min(v + val_tolerance, 255)])
+
+    return lower_bound, upper_bound
+
+# def is_screen_mostly_color(screenshot, hex_color, threshold=0.3):
+#     """
+#     Check if the majority of the screen falls within the specified hex color.
+    
+#     :param screenshot: The image (NumPy array).
+#     :param hex_color: Target color in ARGB hex format (#AARRGGBB).
+#     :param threshold: Percentage threshold to determine if the screen is mostly the target color.
+#     :return: Boolean indicating whether the majority of the screen matches the target color.
+#     """
+#     # Convert hex to RGB
+#     target_rgb = hex_to_rgb(hex_color)
+
+#     # Get HSV range for the target color
+#     lower_hsv, upper_hsv = rgb_to_hsv_range(target_rgb)
+
+#     # Convert the screenshot to HSV
+#     hsv_image = cv2.cvtColor(screenshot, cv2.COLOR_BGR2HSV)
+
+#     # Create a mask for pixels within the color range
+#     mask = cv2.inRange(hsv_image, lower_hsv, upper_hsv)
+
+#     # Calculate the percentage of matching pixels
+#     matching_pixel_count = np.count_nonzero(mask)
+#     total_pixel_count = screenshot.shape[0] * screenshot.shape[1]
+#     match_percentage = matching_pixel_count / total_pixel_count
+
+#     # Return True if the match percentage exceeds the threshold
+#     return match_percentage > threshold
+
+
+def is_screen_mostly_color(screenshot, hex_color, threshold=0.5):
+    # Debugging: Check if screenshot is valid
+    if not isinstance(screenshot, np.ndarray):
+        raise ValueError("Screenshot must be a valid NumPy array!")
+
+    # Ensure the screenshot has 3 color channels (BGR)
+    if len(screenshot.shape) == 2:  # Grayscale image
+        screenshot = cv2.cvtColor(screenshot, cv2.COLOR_GRAY2BGR)
+
+    # Convert screenshot to HSV
+    hsv_image = cv2.cvtColor(screenshot, cv2.COLOR_BGR2HSV)
+
+    # Convert hex to RGB
+    target_rgb = hex_to_rgb(hex_color)
+    print(f"Target RGB Color: {target_rgb}")
+
+    # Convert RGB to HSV range
+    lower_hsv, upper_hsv = rgb_to_hsv_range(target_rgb)
+    print(f"Lower HSV Bound: {lower_hsv}")
+    print(f"Upper HSV Bound: {upper_hsv}")
+
+    # Create a mask for pixels in the target color range
+    mask = cv2.inRange(hsv_image, lower_hsv, upper_hsv)
+
+    # Debug: Display mask and screenshot
+    cv2.imshow("Original Screenshot", screenshot)
+    cv2.imshow("Detected Mask", mask)
+
+    # Show a solid color window of the target color for sanity check
+    solid_color = np.full((100, 100, 3), target_rgb[::-1], dtype=np.uint8)  # BGR format for OpenCV
+    cv2.imshow("Target Color (BGR)", solid_color)
+
+    cv2.waitKey(0)  # Wait for user to press a key
+    cv2.destroyAllWindows()  # Close all OpenCV windows
+
+    # Compute the match percentage
+    match_percentage = np.count_nonzero(mask) / (screenshot.shape[0] * screenshot.shape[1])
+    print(f"Match Percentage: {match_percentage * 100:.2f}%")
+
+    return match_percentage > threshold
+
+def is_screen_mostly_red(screenshot, threshold=0.5):
+    # Validate screenshot
+    if not isinstance(screenshot, np.ndarray):
+        raise ValueError("Screenshot must be a valid NumPy array!")
+
+    # Ensure the screenshot has 3 color channels (BGR)
+    if len(screenshot.shape) == 2:  # Grayscale image
+        screenshot = cv2.cvtColor(screenshot, cv2.COLOR_GRAY2BGR)
+
+    # Convert to HSV
+    hsv_image = cv2.cvtColor(screenshot, cv2.COLOR_BGR2HSV)
+
+    # Define red hue range in HSV
+    lower_red1 = np.array([0, 100, 50])     # Lower red
+    upper_red1 = np.array([10, 255, 255])   
+    lower_red2 = np.array([170, 100, 50])   # Upper red
+    upper_red2 = np.array([180, 255, 255])
+
+    # Create masks for both red ranges
+    mask1 = cv2.inRange(hsv_image, lower_red1, upper_red1)
+    mask2 = cv2.inRange(hsv_image, lower_red2, upper_red2)
+
+    # Combine both red masks
+    red_mask = mask1 + mask2
+
+    # Calculate the percentage of red pixels
+    red_percentage = np.count_nonzero(red_mask) / (screenshot.shape[0] * screenshot.shape[1])
+
+    # print(f"Red Pixels Percentage: {red_percentage * 100:.2f}%")
+
+    print("Red percentage: " + str(red_percentage))
+
+    return red_percentage > threshold
+
+
+# while True:
+#     screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+#     screenshot = np.array(screenshot)
+#     screenshot = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
+#     print(is_screen_mostly_red(screenshot))
+#     time.sleep(5)
+
+def is_fighting(mob_name):
+    screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+
+    monster = mob_name
+    png1 = f"runescape/{monster}/{monster}.png"
+    # png2 = f"runescape/{monster}/{monster}_dead.png"
+
+    return check_if_screenshot_contains(screenshot, png1)
+
+def is_mob_dead(mob_name):
+    screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+
+    monster = mob_name
+    # png1 = f"runescape/{monster}/{monster}.png"
+    png2 = f"runescape/{monster}/{monster}_dead.png"
+
+    return check_if_screenshot_contains(screenshot, png2)
+
+def heal_if_low(threshold=0.5):
+    screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+    screenshot = np.array(screenshot)
+    screenshot = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
+
+    if is_screen_mostly_red(screenshot, threshold=threshold):
+        print("Healing...")
+        click("RuneLite", "runescape/food/swordfish.png")
+
+def click_closest_mob():
+    lower_green = np.array([10, 250, 10])  # Lower bound (darker/muted green)
+    upper_green = np.array([70, 255, 255])  # Upper bound (bright green)
+    # click_closest_polygon(lower_green, upper_green)
+    color_rgb = (10, 250, 10)
+    while True:
+        if keyboard.is_pressed("esc"):
+            print("Escape key pressed, exiting loop.")
+            break
+
+        click_closest_polygon(color_rgb)
+        time.sleep(2)
+
+def click_closest_mob_once():
+    lower_green = np.array([10, 250, 10])  # Lower bound (darker/muted green)
+    upper_green = np.array([70, 255, 255])  # Upper bound (bright green)
+    # click_closest_polygon(lower_green, upper_green)
+    color_rgb = (0, 255, 255)
+    click_closest_polygon(color_rgb)
+
+# click_closest_mob()
+
+@auto_gc(interval=100)
+def fight_mob(mob_name, threshhold=None):
+    while True:
+        # heal if below X HP
+
+        if threshhold is not None:
+            heal_if_low(threshold=threshhold)
+        else:
+            heal_if_low()
+
+        if keyboard.is_pressed("esc"):
+            print("Escape key pressed, exiting loop.")
+            break
+
+        # if we're fighting mob, do nothing
+        if is_mob_dead(mob_name):
+            print(f'Killed {mob_name}!')
+            # wait in case there is auto-retalitaiton
+            time.sleep(2)
+
+            if is_mob_dead(mob_name):
+                print("Attacking new mob.")
+                click_closest_mob_once()
+
+                time.sleep(2)
+            else:
+                print("Retalitated.")
+        elif is_fighting(mob_name):
+            print("Still fighting mob...")
+            pass
+        else:
+            print("Attacking.")
+            click_closest_mob_once()
+            time.sleep(2)
+        
+        time.sleep(1)
+
+def click_tree():
+    folder = "draynor_tree"
+    tree_options = [
+        "runescape/" + folder + "/tree_1.png",
+        "runescape/" + folder + "/tree_2.png",
+        "runescape/" + folder + "/tree_3.png",
+        "runescape/" + folder + "/tree_4.png",
+        "runescape/" + folder + "/tree_5.png",
+    ]
+
+    finding_tree = True
+
+    while finding_tree:
+        for tree_option in tree_options:
+            if click("RuneLite", tree_option, threshold=0.60):
+                finding_tree = False
+                break
+            
+
+def woodcutting():
+
+    status = "start"
+    while True:
+        
+        time.sleep(2)
+
+        if status == "start":
+            click_tree()
+            time.sleep(3)
+
+            screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+            if check_if_screenshot_contains(screenshot, "runescape/draynor_tree/woodcutting.png"):
+                status = "cutting"
+        elif status == "cutting":
+            screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+
+            if check_if_screenshot_contains(screenshot, "runescape/draynor_tree/woodcutting.png"):
+                continue
+            if not check_if_screenshot_contains(screenshot, "runescape/draynor_tree/full_logs.png"):
+                status = "start"
+                continue
+            else:
+                status = "full"
+                continue
+        elif status == "full":
+            click("RuneLite", "runescape/draynor_tree/static_square.png", threshold=0.55)
+            time.sleep(3)
+
+            click("RuneLite", "runescape/draynor_tree/bank_1.png", threshold=0.65)
+            time.sleep(5)
+
+            click("RuneLite", "runescape/draynor_tree/store.png", threshold=0.65)
+            time.sleep(1)
+
+            click("RuneLite", "runescape/draynor_tree/x.png", threshold=0.65)
+            time.sleep(1)
+
+            click("RuneLite", "runescape/draynor_tree/static_square.png", threshold=0.65)
+            time.sleep(5)
+
+            status = "start"
+            time.sleep(1)
+
+def check_if_screenshot_contains_color(screenshot, target_image_path, threshold=0.85):
+    # Convert the screenshot to a format compatible with OpenCV
+    screenshot_np = np.array(screenshot)
+    
+    # Load the target image in color (keep all channels)
+    target = cv2.imread(target_image_path, cv2.IMREAD_COLOR)
+    if target is None:
+        print(f"Could not load target image from {target_image_path}.")
+        return False
+
+    # Match the template in each color channel separately
+    result_blue = cv2.matchTemplate(screenshot_np[:, :, 0], target[:, :, 0], cv2.TM_CCOEFF_NORMED)
+    result_green = cv2.matchTemplate(screenshot_np[:, :, 1], target[:, :, 1], cv2.TM_CCOEFF_NORMED)
+    result_red = cv2.matchTemplate(screenshot_np[:, :, 2], target[:, :, 2], cv2.TM_CCOEFF_NORMED)
+
+    # Compute the average match score across all color channels
+    result = (result_blue + result_green + result_red) / 3
+
+    # Find the best match location and value
+    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+
+    # Check if the match is above the threshold
+    if max_val >= threshold:
+        print(f"Found {target_image_path}!")
+        return True
+    else:
+        print(f"Did not find {target_image_path} ):")
+        return False
+
+@auto_gc(interval=100)
+def nightmare_zone():
+    potion_levels = [
+        "runescape/nightmare_zone/potion_1.png",
+        "runescape/nightmare_zone/potion_2.png",
+        "runescape/nightmare_zone/potion_3.png",
+        "runescape/nightmare_zone/potion_4.png",
+    ]
+
+    while True:
+        if click("RuneLite", "runescape/nightmare_zone/rock_cake.png", threshold=0.85):
+            move_mouse_near_window_middle("RuneLite")
+            time.sleep(30)
+
+            screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+            if not check_if_screenshot_contains_color(screenshot, "runescape/nightmare_zone/absorption_potion.png", threshold=0.72):
+                for potion_level in potion_levels:
+                    if click("RuneLite", potion_level):
+                        time.sleep(2)
+                        break
+
+        
+# nightmare_zone()
+
+def sell_pyramid():
+    screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+    while check_if_screenshot_contains_color(screenshot, "runescape/agility_pyramid/pyramid.png", threshold=0.85):
+        if click("RuneLite", "runescape/agility_pyramid/pyramid.png"):
+            color_rgb = (0, 0, 225)
+            click_closest_polygon(color_rgb, min_area=100)
+
+            time.sleep(2)
+            screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+
+def agility_pyramid(checkpoint=None):
+    if checkpoint is None:
+        checkpoint = 0
+
+    if checkpoint == 0:
+        click("RuneLite", "runescape/agility_pyramid/yellow_square_1.png", threshold=0.55)
+        time.sleep(4)
+        click("RuneLite", "runescape/agility_pyramid/climb_down.png", threshold=0.65)
+        time.sleep(7)
+
+        click("RuneLite", "runescape/agility_pyramid/1_stair.png", threshold=0.70)
+        time.sleep(2)
+
+        checkpoint += 1
+
+    if checkpoint == 1:
+        click_tuples = [
+            ("runescape/agility_pyramid/2_square.png", 5),
+            ("runescape/agility_pyramid/3_rock.png", 6),
+            ("runescape/agility_pyramid/4_ledge.png", 7),
+            ("runescape/agility_pyramid/5_square.png", 6),
+        ]
+
+        for click_tuple in click_tuples:
+            click("RuneLite", click_tuple[0], threshold=0.7)
+            print(click_tuple[0])
+            time.sleep(click_tuple[1])
+        
+        checkpoint += 1
+
+    if checkpoint == 2:
+        screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+        while not check_if_screenshot_contains_color(screenshot, "runescape/agility_pyramid/6_check.png", threshold=0.75):
+            time.sleep(0.5)
+            screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+
+        checkpoint += 1
+    
+    if checkpoint == 3:
+        click_tuples = [
+            ("runescape/agility_pyramid/6_plank.png", 7),
+            ("runescape/agility_pyramid/7_square.png", 4),
+            ("runescape/agility_pyramid/8_gap.png", 6),
+            ("runescape/agility_pyramid/9_gap.png", 5),
+            ("runescape/agility_pyramid/10_stair.png", 3),
+            ("runescape/agility_pyramid/11_gap.png", 7),
+            ("runescape/agility_pyramid/12_gap.png", 5),
+            ("runescape/agility_pyramid/13_gap.png", 7),
+            ("runescape/agility_pyramid/14_square.png", 4),
+            ("runescape/agility_pyramid/15_ledge.png", 7),
+            ("runescape/agility_pyramid/16_wall.png", 5),
+            ("runescape/agility_pyramid/17_gap.png", 5),
+            ("runescape/agility_pyramid/18_stair.png", 5),
+            ("runescape/agility_pyramid/19_wall.png", 5),
+            ("runescape/agility_pyramid/20_ledge.png", 8),
+            ("runescape/agility_pyramid/21_square.png", 3),
+        ]
+
+        for click_tuple in click_tuples:
+            click("RuneLite", click_tuple[0], threshold=0.7)
+            print(click_tuple[0])
+            time.sleep(click_tuple[1])
+        
+        checkpoint += 1
+    
+    if checkpoint == 4:
+        screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+        while not check_if_screenshot_contains_color(screenshot, "runescape/agility_pyramid/21_check.png", threshold=0.75):
+            time.sleep(0.5)
+            screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+        
+        checkpoint += 1
+
+    if checkpoint == 5:
+        click_tuples = [
+            ("runescape/agility_pyramid/22_gap.png", 8),
+            ("runescape/agility_pyramid/23_plank.png", 8),
+            ("runescape/agility_pyramid/24_stair.png", 3),
+            ("runescape/agility_pyramid/25_gap.png", 4),
+            ("runescape/agility_pyramid/26_wall.png", 4),
+            ("runescape/agility_pyramid/27_gap.png", 5),
+            ("runescape/agility_pyramid/28_gap.png", 5),
+            ("runescape/agility_pyramid/29_wall.png", 3),
+            ("runescape/agility_pyramid/30_stair.png", 3),
+            ("runescape/agility_pyramid/31_grab.png", 5),
+            ("runescape/agility_pyramid/31_grab.png", 5),
+            ("runescape/agility_pyramid/31_grab_b.png", 5),
+            ("runescape/agility_pyramid/32_square.png", 3),
+            ("runescape/agility_pyramid/33_gap.png", 3),
+            ("runescape/agility_pyramid/34_exit.png", 3),
+            ("runescape/agility_pyramid/35_restart.png", 9),
+        ]
+
+        for click_tuple in click_tuples:
+            click("RuneLite", click_tuple[0], threshold=0.7)
+            print(click_tuple[0])
+            time.sleep(click_tuple[1])
+
+        checkpoint += 1
+
+    if checkpoint == 6:
+        sell_pyramid()
+
+# agility_pyramid(checkpoint=5)
+
+# varlamore_thieving()
+
+# while True:
+#     print("Starting compbat...")
+#     heal_if_low(threshold=0.1)
+#     time.sleep(5)
+
+# fight_mob("dagannoth", threshhold=0.1)
+
+# click("RuneLite", "runescape/agility_pyramid/21_square.png", threshold=0.7)
+
+# replay_actions(record_files=["runescape/agility_pyramid/agility_pyramid_2.json"], once=True)
+
+# sell_pyramid()
+
+# record_actions()
+# replay_actions()
+
+# sell_pyramid()
+
+# agility_pyramid()
+
+# click("RuneLite", "runescape/agility_pyramid/2_square.png", threshold=0.85)
+
+
+# screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+# print(check_if_screenshot_contains_color(screenshot, "runescape/nightmare_zone/absorption_potion.png", threshold=0.72))
+
+
+# woodcutting()
+
+# mistrock_fishing()
+
+# fight_mob("kalphite")
+
+# while True:
+#     heal_if_low()
+#     time.sleep(5)
+
+# while True:
+#     click_closest_mob_once()
+
+#     screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+#     screenshot = np.array(screenshot)
+#     screenshot = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
+
+#     if is_screen_mostly_red(screenshot):
+#         break
+
+#     time.sleep(2)
+# varlamore_thieving()
+# mistrock_fishing()
+
+# record_actions()
+# replay_actions()
+
+# motherload_mine_files = [
+#     "motherlode_mine.json",
+# ]
+
+# replay_actions(record_files=motherload_mine_files)
+
+
+# record_actions()
+
+# varlamore_thieving()
+nightmare_zone()

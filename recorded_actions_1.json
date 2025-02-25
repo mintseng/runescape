@@ -1,1 +1,80 @@
-[{"type": "mouse_click", "button": "left", "event_type": "down", "x": 826, "y": 528, "time": 1.6311430931091309}, {"type": "mouse_click", "button": "left", "event_type": "up", "x": 826, "y": 528, "time": 1.7002065181732178}, {"type": "key_event", "key": "2", "event_type": "down", "time": 3.0606110095977783}, {"type": "key_event", "key": "2", "event_type": "up", "time": 3.132162094116211}, {"type": "mouse_click", "button": "left", "event_type": "down", "x": 826, "y": 528, "time": 5.800384283065796}, {"type": "mouse_click", "button": "left", "event_type": "up", "x": 826, "y": 528, "time": 5.874462127685547}, {"type": "key_event", "key": "1", "event_type": "down", "time": 7.875980615615845}, {"type": "key_event", "key": "1", "event_type": "up", "time": 7.924034357070923}, {"type": "mouse_click", "button": "left", "event_type": "down", "x": 1485, "y": 676, "time": 11.727376222610474}, {"type": "mouse_click", "button": "left", "event_type": "up", "x": 1485, "y": 676, "time": 11.818964719772339}, {"type": "key_event", "key": "esc", "event_type": "down", "time": 13.620286226272583}]
+[
+    {
+        "type": "mouse_click",
+        "button": "left",
+        "event_type": "down",
+        "x": 826,
+        "y": 528,
+        "time": 1.6311430931091309
+    },
+    {
+        "type": "mouse_click",
+        "button": "left",
+        "event_type": "up",
+        "x": 826,
+        "y": 528,
+        "time": 1.7002065181732178
+    },
+    {
+        "type": "key_event",
+        "key": "2",
+        "event_type": "down",
+        "time": 3.0606110095977783
+    },
+    {
+        "type": "key_event",
+        "key": "2",
+        "event_type": "up",
+        "time": 3.132162094116211
+    },
+    {
+        "type": "mouse_click",
+        "button": "left",
+        "event_type": "down",
+        "x": 826,
+        "y": 528,
+        "time": 5.800384283065796
+    },
+    {
+        "type": "mouse_click",
+        "button": "left",
+        "event_type": "up",
+        "x": 826,
+        "y": 528,
+        "time": 5.874462127685547
+    },
+    {
+        "type": "key_event",
+        "key": "1",
+        "event_type": "down",
+        "time": 7.875980615615845
+    },
+    {
+        "type": "key_event",
+        "key": "1",
+        "event_type": "up",
+        "time": 7.924034357070923
+    },
+    {
+        "type": "mouse_click",
+        "button": "left",
+        "event_type": "down",
+        "x": 1485,
+        "y": 676,
+        "time": 11.727376222610474
+    },
+    {
+        "type": "mouse_click",
+        "button": "left",
+        "event_type": "up",
+        "x": 1485,
+        "y": 676,
+        "time": 11.818964719772339
+    },
+    {
+        "type": "key_event",
+        "key": "esc",
+        "event_type": "down",
+        "time": 13.620286226272583
+    }
+]
