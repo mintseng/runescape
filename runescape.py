@@ -1659,12 +1659,16 @@ def nightmare_zone():
 
 def sell_pyramid():
     screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
-    while check_if_screenshot_contains_color(screenshot, "runescape/agility_pyramid/pyramid.png", threshold=0.85):
+    while check_if_screenshot_contains_color(screenshot, "runescape/agility_pyramid/pyramid.png", threshold=0.75):
         if click("RuneLite", "runescape/agility_pyramid/pyramid.png"):
+            move_mouse_near_window_middle("RuneLite")
+
             color_rgb = (0, 0, 225)
             click_closest_polygon(color_rgb, min_area=100)
 
             time.sleep(2)
+
+            move_mouse_near_window_middle("RuneLite")
             screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
 
 def agility_pyramid(checkpoint=None):
@@ -1770,6 +1774,67 @@ def agility_pyramid(checkpoint=None):
     if checkpoint == 6:
         sell_pyramid()
 
+def agility_pyramid_recorded():
+    agility_pyramid_files = [
+        "runescape/agility_pyramid/agility_pyramid_1.json",
+    ]
+    replay_actions(record_files=agility_pyramid_files, once=True)
+
+    # checkpoint 1
+    time.sleep(2)
+    screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+    while not check_if_screenshot_contains_color(screenshot, "runescape/agility_pyramid/6_check.png", threshold=0.75):
+        time.sleep(0.5)
+        screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+    
+    time.sleep(1)
+    
+    agility_pyramid_files = [
+        "runescape/agility_pyramid/agility_pyramid_2.json",
+    ]
+    replay_actions(record_files=agility_pyramid_files, once=True)
+
+    # checkpoint 2
+    time.sleep(2)
+    screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+    while not check_if_screenshot_contains_color(screenshot, "runescape/agility_pyramid/21_check.png", threshold=0.75):
+        time.sleep(0.5)
+        screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+    
+    time.sleep(1)
+
+    agility_pyramid_files = [
+        "runescape/agility_pyramid/agility_pyramid_3.json",
+    ]
+    replay_actions(record_files=agility_pyramid_files, once=True)
+
+    if check_if_screenshot_contains(screenshot, "runescape/agility_pyramid/end_check.png"):
+        agility_pyramid_files = [
+            "runescape/agility_pyramid/end_check.json",
+        ]
+        replay_actions(record_files=agility_pyramid_files, once=True)
+
+        time.sleep(2)
+
+    sell_pyramid()
+    time.sleep(1)
+    click("RuneLite", "runescape/agility_pyramid/yellow_square_1.png", threshold=0.55)
+    time.sleep(2)
+
+# agility_pyramid_recorded()
+
+# record_actions()
+
+# while True:
+#     agility_pyramid_recorded()
+#     time.sleep(2)
+
+
+
+# varlamore_thieving()
+
+# record_actions()
+
 # agility_pyramid(checkpoint=5)
 
 # varlamore_thieving()
@@ -1838,4 +1903,121 @@ def agility_pyramid(checkpoint=None):
 # record_actions()
 
 # varlamore_thieving()
-nightmare_zone()
+# nightmare_zone()
+
+# screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+# print(check_if_screenshot_contains(screenshot, "runescape/draynor_tree/tree_6.png", threshold=0.75))
+# print(check_if_screenshot_contains_color(screenshot, "runescape/draynor_tree/woodcutting.png", threshold=0.75))
+
+def draynor_fletching():
+    while True:
+        screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+        # while check_if_screenshot_contains(screenshot, "runescape/draynor_tree/willow_log.png", threshold=0.75):
+        #     click("RuneLite", "runescape/draynor_tree/willow_log.png", threshold=0.75)
+        #     click("RuneLite", "runescape/draynor_tree/knife.png", threshold=0.75)
+        #     time.sleep(1)
+        #     click("RuneLite", "runescape/draynor_tree/arrow_shaft.png", threshold=0.75)
+            
+        #     screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+        while check_if_screenshot_contains(screenshot, "runescape/draynor_tree/willow_log.png", threshold=0.75):
+            if not check_if_screenshot_contains(screenshot, "runescape/draynor_tree/cutting.png", threshold=0.75):
+                click("RuneLite", "runescape/draynor_tree/willow_log.png", threshold=0.75)
+                click("RuneLite", "runescape/draynor_tree/knife.png", threshold=0.75)
+                time.sleep(1)
+                click("RuneLite", "runescape/draynor_tree/arrow_shaft.png", threshold=0.75)
+
+            time.sleep(2)
+            screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+
+            if check_if_screenshot_contains(screenshot, "runescape/draynor_tree/continue.png", threshold=0.75):
+                click("RuneLite", "runescape/draynor_tree/continue.png", threshold=0.75)
+
+            screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+        
+        click("RuneLite", "runescape/draynor_tree/tree_6.png", threshold=0.75)
+        time.sleep(2)
+
+        while check_if_screenshot_contains_color(screenshot, "runescape/draynor_tree/woodcutting.png", threshold=0.75):
+            time.sleep(3)
+            screenshot = capture_window_screenshot("RuneLite", "screenshot.png")
+
+# draynor_fletching()
+
+
+
+def auto_clicker():
+    """Listens for F5 to toggle clicking, while clicking twice every 0.6s when active."""
+    clicking = False  # Toggle state
+
+    def click_loop():
+        """Handles the clicking process."""
+        nonlocal clicking
+        while True:
+            if clicking:
+                pyautogui.click()  # First click
+                time.sleep(0.05)   # Small delay
+                pyautogui.click()  # Second click
+                time.sleep(0.52)   # Wait remaining time to make it 0.6s total
+            else:
+                time.sleep(0.1)  # Prevent CPU overuse when idle
+
+    # Start clicking loop in a thread
+    threading.Thread(target=click_loop, daemon=True).start()
+
+    while True:
+        keyboard.wait("F5")  # Wait for F5 press
+        clicking = not clicking  # Toggle state
+        print("Clicking started!" if clicking else "Clicking stopped!")
+        time.sleep(0.2)  # Prevent rapid re-trigger from key holding
+
+# auto_clicker()
+
+# record_actions()
+
+# auto_clicker()
+
+running = False
+
+def toggle():
+    global running
+    running = not running
+    print("Resumed function." if running else "Paused function.")
+
+def run_function():
+    while True:
+        if running:
+            replay_actions(once=True)
+        
+        time.sleep(2)
+
+def quick_record_replay():
+    record_actions()
+
+    thread = threading.Thread(target=run_function, daemon=True)  # Run B in a background thread
+    thread.start()
+
+    keyboard.add_hotkey("F5", toggle)  # Listen for F5 key to toggle B's execution
+
+    keyboard.wait()  # Keep the script running
+
+# quick_record_replay()
+
+# varlamore_thieving()
+
+auto_clicker()
+
+# nightmare_zone()
+
+# while True:
+#     time.sleep(3)
+#     heal_if_low()
+
+# while True:
+#     time.sleep(2)
+#     agility_pyramid_recorded()
+
+# record_actions()
+
+# while True:
+#     heal_if_low()
+#     time.sleep(3)
